@@ -15,7 +15,8 @@ verify: ## Verify code. Includes codegen, dependencies, linting, formatting, etc
 
 apply:
 	helm upgrade --install kube-event-bridge ./chart \
-	  --set controller.image=$$(ko build -B github.com/ellistarn/kube-event-bridge/cmd/controller)
+	  --set controller.image=$$(ko build -B github.com/ellistarn/kube-event-bridge/cmd/controller) \
+	  --set serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/kube-event-bridge
 
 delete:
 	helm template chart | ko delete -f -
