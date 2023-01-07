@@ -11,8 +11,9 @@
 ```sh
 export GOPATH=$HOME/workspaces/go # Override if desired
 mkdir -p $GOPATH/src/github.com/ellistarn
-cd $HOME/go/src/github.com/ellistarn
+cd $GOPATH/src/github.com/ellistarn
 gh repo clone ellistarn/kube-event-bridge
+cd kube-event-bridge
 ```
 
 ### Create an ECR Repository
