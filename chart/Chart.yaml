@@ -1,0 +1,11 @@
+apiVersion: v2
+name: kube-event-bridge
+description: A Helm chart for kube-event-bridge, a controller for publishing kube events to AWS Event Bridge
+type: application
+version: 0.0.1
+appVersion: 0.0.1
+keywords:
+  - events
+  - event-bridge
+sources:
+  - https://github.com/ellistarn/kube-event-bridge
