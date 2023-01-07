@@ -9,7 +9,8 @@
 
 ### Clone the repo
 ```sh
-mkdir -p $HOME/go/src/github.com/ellistarn
+export GOPATH=$HOME/workspaces/go # Override if desired
+mkdir -p $GOPATH/src/github.com/ellistarn
 cd $HOME/go/src/github.com/ellistarn
 gh repo clone ellistarn/kube-event-bridge
 ```

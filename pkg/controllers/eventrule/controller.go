@@ -14,12 +14,12 @@ import (
 
 func NewController(kubeClient client.Client) *Controller {
 	return &Controller{
-		kubeClient:   kubeClient,
+		kubeClient: kubeClient,
 	}
 }
 
 type Controller struct {
-	kubeClient   client.Client
+	kubeClient client.Client
 }
 
 func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -28,7 +28,11 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, event); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
-	log.FromContext(ctx).Info("Got event", event)
+	log.FromContext(ctx).Info("Got event",
+		"reason", event.Reason,
+		"message", event.Message,
+		"type", event.Type,
+	)
 
 	// Read all event rules
 	eventRuleList := &v1alpha1.EventRuleList{}
