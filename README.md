@@ -19,6 +19,7 @@ cd kube-event-bridge
 ### Setup AWS Resources
 
 ```sh
+AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:=undefined} # Recommended to be included in your bashrc
 aws ecr create-repository --repository-name kube-event-bridge/controller --image-scanning-configuration scanOnPush=true
 aws iam create-policy --policy-name kube-event-bridge --policy-document '{
   "Version": "2012-10-17",
