@@ -27,7 +27,8 @@ aws iam create-policy --policy-name kube-event-bridge --policy-document '{
     {
       "Effect": "Allow",
       "Action": [
-          "events:*"
+          "events:*",
+          "sqs:*"
       ],
       "Resource": "*"
     }
@@ -52,4 +53,16 @@ stern -l app.kubernetes.io/name=kube-event-bridge
 ```sh
 eksctl delete iamserviceaccount --name kube-event-bridge --cluster $(kubectl config view --minify -o jsonpath='{.clusters[].name}' | rev | cut -d"/" -f1 | rev | cut -d"." -f1)
 aws iam delete-policy --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/kube-event-bridge
+```
+
+
+## Demo
+
+Remove this once we have the SQS controller
+```
+aws sqs receive-message --queue-url $(aws sqs get-queue-url --queue-name demo | jq -r ".QueueUrl")
+
+aws sqs send-message --queue-url $(aws sqs get-queue-url --queue-name demo | jq -r ".QueueUrl") --message-body "$(echo $(k get events -ojson | jq ".items[0]"))"
+
+aws sqs delete-message --queue-url demo --receipt-handle $(aws sqs receive-message --queue-url $(aws sqs get-queue-url --queue-name demo | jq -r ".QueueUrl") | jq -r ".Messages[].ReceiptHandle")
 ```

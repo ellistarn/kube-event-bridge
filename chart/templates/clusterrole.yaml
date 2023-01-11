@@ -33,9 +33,5 @@ rules:
     resources: ["events"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["events.amazonaws.com"]
-    resources: ["eventrules"]
+    resources: ["eventrules", "slacktargets"]
     verbs: ["get", "list", "watch"]
-  # Write
-  - apiGroups: ["events.amazonaws.com"]
-    resources: ["eventrules/status"]
-    verbs: ["patch"]

@@ -18,37 +18,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EventRuleSpec describes the desired state of the EventRule
-type EventRuleSpec struct {
-	// EventBus to send the messages to. Defaults to `default`.
-	// +optional
-	EventBus *string  `json:"eventBus,omitempty"`
-	Filter   []Filter `json:"filter,omitempty"`
+// SlackTargetSpec describes the desired state of the SlackTarget
+type SlackTargetSpec struct {
+	// EventRule is the name of the event rule to source messages
+	// +required
+	EventRule string `json:"eventRule"`
+	// HTTPEndpoint of the slack webhook to post the messages
+	// +required
+	HTTPEndpoint string `json:"httpEndpoint"`
 }
 
-type Filter struct {
-	// Reason of the event. Matches all, if unset
-	// +optional
-	Reason *string `json:"reason,omitempty"`
-	// Type of the message: (Info | Warning | Error). Matches all, if unset
-	// +optional
-	Type *string `json:"type,omitempty"`
-}
-
-// EventRule is the Schema for the EventRules API
+// SlackTarget is the Schema for the SlackTargets API
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:path=eventrules,scope=Cluster
-type EventRule struct {
+// +kubebuilder:resource:path=slacktargets,scope=Cluster
+type SlackTarget struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec EventRuleSpec `json:"spec,omitempty"`
+	Spec SlackTargetSpec `json:"spec,omitempty"`
 }
 
-// EventRuleList contains a list of Provisioner
+// SlackTargetList contains a list of Provisioner
 // +kubebuilder:object:root=true
-type EventRuleList struct {
+type SlackTargetList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EventRule `json:"items"`
+	Items           []SlackTarget `json:"items"`
 }

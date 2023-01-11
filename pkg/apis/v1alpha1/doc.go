@@ -34,6 +34,8 @@ var (
 		scheme.AddKnownTypes(SchemeGroupVersion,
 			&EventRule{},
 			&EventRuleList{},
+			&SlackTarget{},
+			&SlackTargetList{},
 		)
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil
