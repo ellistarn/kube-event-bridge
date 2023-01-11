@@ -43,7 +43,10 @@ priorityClassName: system-cluster-critical
 terminationGracePeriodSeconds:
 nodeSelector:
   kubernetes.io/os: linux
-
+# -- Tolerations to allow the pod to be scheduled to nodes with taints.
+tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists
 controller:
   # -- Controller image.
   image: ""

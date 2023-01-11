@@ -1,0 +1,15 @@
+apiVersion: events.amazonaws.com/v1alpha1
+kind: EventRule
+metadata:
+  name: demo
+spec:
+  # type: Warning
+---
+apiVersion: events.amazonaws.com/v1alpha1
+kind: SlackTarget
+metadata:
+  name: demo
+spec:
+  # Spams @ellistarn
+  eventRule: demo
+  httpEndpoint: https://hooks.slack.com/workflows/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

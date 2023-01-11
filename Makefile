@@ -19,4 +19,4 @@ apply:
 	  --set serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/kube-event-bridge
 
 delete:
-	helm template chart | ko delete -f -
+	helm uninstall kube-event-bridge

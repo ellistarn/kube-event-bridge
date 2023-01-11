@@ -1,4 +1,4 @@
-package eventrule
+package event
 
 import (
 	"context"

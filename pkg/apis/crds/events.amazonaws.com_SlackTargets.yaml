@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: eventrules.events.amazonaws.com
+  name: slacktargets.events.amazonaws.com
 spec:
   group: events.amazonaws.com
   names:
-    kind: EventRule
-    listKind: EventRuleList
-    plural: eventrules
-    singular: eventrule
+    kind: SlackTarget
+    listKind: SlackTargetList
+    plural: slacktargets
+    singular: slacktarget
   scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: EventRule is the Schema for the EventRules API
+        description: SlackTarget is the Schema for the SlackTargets API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,23 +33,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: EventRuleSpec describes the desired state of the EventRule
+            description: SlackTargetSpec describes the desired state of the SlackTarget
             properties:
-              eventBus:
-                description: EventBus to send the messages to. Defaults to `default`.
+              eventRule:
+                description: EventRule is the name of the event rule to source messages
                 type: string
-              filter:
-                items:
-                  properties:
-                    reason:
-                      description: Reason of the event. Matches all, if unset
-                      type: string
-                    type:
-                      description: 'Type of the message: (Info | Warning | Error).
-                        Matches all, if unset'
-                      type: string
-                  type: object
-                type: array
+              httpEndpoint:
+                description: HTTPEndpoint of the slack webhook to post the messages
+                type: string
+            required:
+            - eventRule
+            - httpEndpoint
             type: object
         type: object
     served: true
