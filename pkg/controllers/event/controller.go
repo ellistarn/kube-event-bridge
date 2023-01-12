@@ -2,8 +2,9 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 
-	"github.com/ellistarn/kube-event-bridge/pkg/apis/v1alpha1"
+	"github.com/ellistarn/kube-event-bridge/pkg/accessor/events"
 	v1 "k8s.io/api/core/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,30 +23,35 @@ type Controller struct {
 	kubeClient client.Client
 }
 
+type EventDetail struct {
+	Message   *string
+	Publisher *string
+}
+
 func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	// Read event
 	event := &v1.Event{}
+	eventBusName := "default"
+	publisherName := "kube-event-bridge"
+
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, event); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
+	eventsAccessor := events.NewEventsAccessor()
 	log.FromContext(ctx).Info("Got event",
 		"reason", event.Reason,
 		"message", event.Message,
 		"type", event.Type,
 	)
 
-	// Read all event rules
-	eventRuleList := &v1alpha1.EventRuleList{}
-	if err := c.kubeClient.List(ctx, eventRuleList); err != nil {
-		return reconcile.Result{}, err
+	eventDetail := EventDetail{
+		Message:   &event.Message,
+		Publisher: &publisherName,
 	}
-
-	// Find matching rule and publish to event bus
-	for _, eventRule := range eventRuleList.Items {
-		if true {
-			log.FromContext(ctx).Info("Found matching event", "eventRule", eventRule.Name)
-		}
-	}
+	msg, _ := json.Marshal(eventDetail)
+	eventMessage := string(msg)
+	log.FromContext(ctx).Info("printing event", "eventMessage= ", eventMessage)
+	eventsAccessor.PutEvents(&eventBusName, &eventMessage, &event.Type, &event.Reason, &event.Name)
 
 	return reconcile.Result{}, nil
 }

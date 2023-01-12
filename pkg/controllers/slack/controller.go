@@ -41,7 +41,7 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	}
 
 	// TODO: Create a SQSQueueTarget instead of hardcoding
-	getQueueUrlOutput, err := c.sqsClient.GetQueueUrlWithContext(ctx, &sqs.GetQueueUrlInput{QueueName: lo.ToPtr(slackTarget.Name)})
+	getQueueUrlOutput, err := c.sqsClient.GetQueueUrlWithContext(ctx, &sqs.GetQueueUrlInput{QueueName: lo.ToPtr(slackTarget.Spec.EventRule)})
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("getting queue url, %w", err)
 	}

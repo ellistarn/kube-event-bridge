@@ -5,6 +5,7 @@ import (
 
 	"github.com/ellistarn/kube-event-bridge/pkg/apis"
 	"github.com/ellistarn/kube-event-bridge/pkg/controllers/event"
+	"github.com/ellistarn/kube-event-bridge/pkg/controllers/eventrule"
 	"github.com/ellistarn/kube-event-bridge/pkg/controllers/slack"
 	"github.com/go-logr/zapr"
 	"github.com/samber/lo"
@@ -29,6 +30,7 @@ func main() {
 	for _, register := range []func(context.Context, manager.Manager) error{
 		event.Register,
 		slack.Register,
+		eventrule.Register,
 	} {
 		lo.Must0(register(ctx, mgr))
 	}
