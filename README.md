@@ -3,13 +3,18 @@
 ### Install tools
 * https://github.com/cli/cli#installation
 * https://helm.sh/docs/intro/install
-* `go install github.com/google/ko@v0.11.2`
-* `go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0`
-* `go install github.com/stern/stern@latest`
+
+```
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
+go install github.com/google/ko@v0.11.2
+go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+go install github.com/stern/stern@latest
+```
 
 ### Clone the repo
 ```sh
 export GOPATH=${HOME}/workspaces/go # Override if desired
+export PATH=$PATH:$GOPATH/bin
 mkdir -p ${GOPATH}/src/github.com/ellistarn
 cd ${GOPATH}/src/github.com/ellistarn
 gh repo clone ellistarn/kube-event-bridge

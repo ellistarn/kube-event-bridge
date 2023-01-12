@@ -21,8 +21,10 @@ var (
 
 //go:generate controller-gen crd object:headerFile="../../hack/boilerplate.go.txt" paths="./..." output:crd:artifacts:config=crds
 var (
-	//go:embed crds/events.amazonaws.com_EventRules.yaml
+	//go:embed crds/events.amazonaws.com_eventrules.yaml
 	EventRuleCRD []byte
+	//go:embed crds/events.amazonaws.com_slacktargets.yaml
+	SlackTargetCRD []byte
 	CRDs           = []*v1.CustomResourceDefinition{
 		lo.Must(Unmarshal[v1.CustomResourceDefinition](EventRuleCRD)),
 	}
