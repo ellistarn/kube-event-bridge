@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -35,11 +36,12 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, event); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
+	log.FromContext(ctx).Info("publishing event", "event", event.Name)
 	// Publish to event bridge
 	if _, err := c.eventBridgeClient.PutEvents(&eventbridge.PutEventsInput{
 		Entries: []*eventbridge.PutEventsRequestEntry{{
 			Detail:       aws.String(string(lo.Must(json.Marshal((event))))),
-			DetailType:   aws.String("test"),
+			DetailType:   aws.String("Event"),
 			EventBusName: aws.String("default"),
 			Resources:    []*string{},
 			Source:       aws.String("kube-event-bridge"),

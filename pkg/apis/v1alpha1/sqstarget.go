@@ -34,7 +34,6 @@ type SQSTargetStatus struct {
 // SQSTarget is the Schema for the SQSTargets API
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=sqstargets,scope=Cluster
-// +kubebuilder:subresource:status
 type SQSTarget struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
