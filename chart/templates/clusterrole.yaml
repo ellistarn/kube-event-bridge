@@ -33,5 +33,12 @@ rules:
     resources: ["events"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["events.amazonaws.com"]
-    resources: ["eventrules", "slacktargets"]
+    resources: ["eventrules", "slacktargets", "sqstargets"]
     verbs: ["get", "list", "watch"]
+  # Write
+  - apiGroups: ["events.amazonaws.com"]
+    resources: ["sqstargets"]
+    verbs: ["create"]
+  - apiGroups: ["events.amazonaws.com"]
+    resources: ["sqstargets/status"]
+    verbs: ["update"]

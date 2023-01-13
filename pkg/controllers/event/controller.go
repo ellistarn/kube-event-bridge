@@ -3,56 +3,50 @@ package event
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
-	"github.com/ellistarn/kube-event-bridge/pkg/accessor/events"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/eventbridge"
+	"github.com/samber/lo"
 	v1 "k8s.io/api/core/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func NewController(kubeClient client.Client) *Controller {
+	sess := lo.Must(session.NewSession())
 	return &Controller{
-		kubeClient: kubeClient,
+		kubeClient:        kubeClient,
+		eventBridgeClient: eventbridge.New(sess),
 	}
 }
 
 type Controller struct {
-	kubeClient client.Client
-}
-
-type EventDetail struct {
-	Message   *string
-	Publisher *string
+	kubeClient        client.Client
+	eventBridgeClient *eventbridge.EventBridge
 }
 
 func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	// Read event
 	event := &v1.Event{}
-	eventBusName := "default"
-	publisherName := "kube-event-bridge"
-
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, event); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
-	eventsAccessor := events.NewEventsAccessor()
-	log.FromContext(ctx).Info("Got event",
-		"reason", event.Reason,
-		"message", event.Message,
-		"type", event.Type,
-	)
-
-	eventDetail := EventDetail{
-		Message:   &event.Message,
-		Publisher: &publisherName,
+	// Publish to event bridge
+	if _, err := c.eventBridgeClient.PutEvents(&eventbridge.PutEventsInput{
+		Entries: []*eventbridge.PutEventsRequestEntry{{
+			Detail:       aws.String(string(lo.Must(json.Marshal((event))))),
+			DetailType:   aws.String("test"),
+			EventBusName: aws.String("default"),
+			Resources:    []*string{},
+			Source:       aws.String("kube-event-bridge"),
+		}},
+	}); err != nil {
+		return reconcile.Result{}, fmt.Errorf("posting events, %w", err)
 	}
-	msg, _ := json.Marshal(eventDetail)
-	eventMessage := string(msg)
-	log.FromContext(ctx).Info("printing event", "eventMessage= ", eventMessage)
-	eventsAccessor.PutEvents(&eventBusName, &eventMessage, &event.Type, &event.Reason, &event.Name)
-
 	return reconcile.Result{}, nil
 }
 

@@ -1,0 +1,62 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.8.0
+  creationTimestamp: null
+  name: sqstargets.events.amazonaws.com
+spec:
+  group: events.amazonaws.com
+  names:
+    kind: SQSTarget
+    listKind: SQSTargetList
+    plural: sqstargets
+    singular: sqstarget
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: SQSTarget is the Schema for the SQSTargets API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SQSTargetSpec describes the desired state of the SQSTarget
+            properties:
+              eventRule:
+                description: EventRule is the name of the event rule to source messages
+                type: string
+            required:
+            - eventRule
+            type: object
+          status:
+            properties:
+              queueUrl:
+                description: Target queue URL
+                type: string
+            required:
+            - queueUrl
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

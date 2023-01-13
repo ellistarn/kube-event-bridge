@@ -36,6 +36,8 @@ var (
 			&EventRuleList{},
 			&SlackTarget{},
 			&SlackTargetList{},
+			&SQSTarget{},
+			&SQSTargetList{},
 		)
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil
