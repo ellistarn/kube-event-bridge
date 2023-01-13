@@ -3,7 +3,6 @@ package eventrule
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -32,50 +31,18 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	fmt.Println("Reconcile invoked in eventRule controller")
 
 	eventrule := &v1alpha1.EventRule{}
-
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, eventrule); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	queueName := eventrule.Name
 	eventBusName := "default"
 	eventRuleName := eventrule.Name
-	eventPattern := "{\"detail\": {\"Publisher\": [\"kube-event-bridge\"]}}"
+	eventPattern := "{\"source\": [{  \"prefix\": \"kube-event-bridge\"}]}"
 	eventsAccessor := events.NewEventsAccessor()
-
-	res, err := c.sqsClient.CreateQueue(&sqs.CreateQueueInput{
-		QueueName: &queueName,
-	})
-
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	queueurl := res.QueueUrl
-
-	_, err = eventsAccessor.CreateEventRule(&eventRuleName, &eventBusName, &eventPattern)
-
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	targetarn := constructArnFromQueueUrl(queueurl)
-	err = eventsAccessor.PutTargets(&eventRuleName, &eventBusName, targetarn)
-
-	if err != nil {
+	if _, err := eventsAccessor.CreateEventRule(&eventRuleName, &eventBusName, &eventPattern); err != nil {
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
-}
-
-func constructArnFromQueueUrl(queueurl *string) *string {
-	url := *queueurl
-	urlarr := strings.Split(url, "/")
-	queuename := urlarr[4]
-	accountid := urlarr[3]
-	region := strings.Split(urlarr[2], ".")[1]
-	queuearn := fmt.Sprintf("%s%s%s%s%s%s", "arn:aws:sqs:", region, ":", accountid, ":", queuename)
-	return &queuearn
 }
 
 func Register(ctx context.Context, m manager.Manager) error {
