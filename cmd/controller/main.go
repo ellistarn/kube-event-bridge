@@ -6,6 +6,7 @@ import (
 	"github.com/ellistarn/kube-event-bridge/pkg/apis"
 	"github.com/ellistarn/kube-event-bridge/pkg/controllers/event"
 	"github.com/ellistarn/kube-event-bridge/pkg/controllers/eventrule"
+	"github.com/ellistarn/kube-event-bridge/pkg/controllers/slacktarget"
 	"github.com/ellistarn/kube-event-bridge/pkg/controllers/sqstarget"
 	"github.com/go-logr/zapr"
 	"github.com/samber/lo"
