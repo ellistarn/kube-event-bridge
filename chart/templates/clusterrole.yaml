@@ -37,8 +37,5 @@ rules:
     verbs: ["get", "list", "watch"]
   # Write
   - apiGroups: ["events.amazonaws.com"]
-    resources: ["sqstargets"]
-    verbs: ["create"]
-  - apiGroups: ["events.amazonaws.com"]
-    resources: ["sqstargets/status"]
-    verbs: ["update"]
+    resources: ["sqstargets", "sqstargets/status", "eventrules"]
+    verbs: ["create", "update"]

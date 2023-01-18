@@ -65,7 +65,7 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 
 	// Publish to slack
 	for _, message := range receiveMessagesOutput.Messages {
-		log.FromContext(ctx).Info(fmt.Sprintf("got message, %s", *message.Body))
+		log.FromContext(ctx).Info("received event", "event", lo.FromPtr(message.MessageId))
 		body, err := Format(ctx, message)
 		if err != nil {
 			return reconcile.Result{}, fmt.Errorf("formatting message %s, %w", message, err)
@@ -80,6 +80,7 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		}); err != nil {
 			return reconcile.Result{}, fmt.Errorf("deleting message, %w", err)
 		}
+		log.FromContext(ctx).Info("deleted message", "receiptHandle", message.ReceiptHandle)
 	}
 	// make sure the aws event rule is created
 	return reconcile.Result{Requeue: true}, nil
@@ -92,8 +93,17 @@ func (c *Controller) ensureSQSTarget(ctx context.Context, slackTarget *v1alpha1.
 			return nil, fmt.Errorf("getting sqs target, %w", err)
 		}
 		sqsTarget = &v1alpha1.SQSTarget{
-			ObjectMeta: metav1.ObjectMeta{Name: slackTarget.Name},
-			Spec:       v1alpha1.SQSTargetSpec{EventRule: slackTarget.Spec.EventRule},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: slackTarget.Name,
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion:         v1alpha1.SchemeGroupVersion.String(),
+					Kind:               "SlackTarget",
+					Name:               slackTarget.Name,
+					UID:                slackTarget.UID,
+					BlockOwnerDeletion: lo.ToPtr(true),
+				}},
+			},
+			Spec: v1alpha1.SQSTargetSpec{EventRule: slackTarget.Spec.EventRule},
 		}
 		if err := c.kubeClient.Create(ctx, sqsTarget); err != nil {
 			return nil, fmt.Errorf("creating sqs target, %w", err)

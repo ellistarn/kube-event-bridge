@@ -13,6 +13,7 @@ import (
 	"github.com/samber/lo"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -20,15 +21,17 @@ import (
 func NewController(kubeClient client.Client) *Controller {
 	sess := lo.Must(session.NewSession())
 	return &Controller{
-		sqsClient:         sqs.New(sess),
 		kubeClient:        kubeClient,
+		sqsClient:         sqs.New(sess),
 		eventBridgeClient: eventbridge.New(sess),
 	}
 }
 
+var Finalizer = fmt.Sprintf("sqstarget.%s", v1alpha1.Group)
+
 type Controller struct {
-	sqsClient         *sqs.SQS
 	kubeClient        client.Client
+	sqsClient         *sqs.SQS
 	eventBridgeClient *eventbridge.EventBridge
 }
 
@@ -37,13 +40,24 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, sqsTarget); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
-
-	// Create Queue
-	createQueueOutput, err := c.sqsClient.CreateQueueWithContext(ctx, &sqs.CreateQueueInput{QueueName: &req.Name})
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("creating queue, %w", err)
+	if err := lo.Ternary(sqsTarget.DeletionTimestamp.IsZero(), c.reconcile, c.finalize)(ctx, sqsTarget); err != nil {
+		return reconcile.Result{}, err
 	}
+	if err := c.kubeClient.Status().Update(ctx, sqsTarget.DeepCopy()); err != nil {
+		return reconcile.Result{}, client.IgnoreNotFound(err)
+	}
+	if err := c.kubeClient.Update(ctx, sqsTarget.DeepCopy()); err != nil {
+		return reconcile.Result{}, client.IgnoreNotFound(err)
+	}
+	return reconcile.Result{}, nil
+}
 
+func (c *Controller) reconcile(ctx context.Context, sqsTarget *v1alpha1.SQSTarget) error {
+	// Create Queue
+	createQueueOutput, err := c.sqsClient.CreateQueueWithContext(ctx, &sqs.CreateQueueInput{QueueName: aws.String(sqsTarget.Name)})
+	if err != nil {
+		return fmt.Errorf("creating queue, %w", err)
+	}
 	// Create SQS Target
 	if _, err := c.eventBridgeClient.PutTargets(&eventbridge.PutTargetsInput{
 		EventBusName: aws.String("default"),
@@ -53,15 +67,29 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			Arn: arnFromQueueUrl(createQueueOutput.QueueUrl),
 		}},
 	}); err != nil {
-		return reconcile.Result{}, fmt.Errorf("creating event rule, %w", err)
+		return fmt.Errorf("creating event rule, %w", err)
 	}
-
 	// Update Status
 	sqsTarget.Status.QueueURL = *createQueueOutput.QueueUrl
-	if err := c.kubeClient.Status().Update(ctx, sqsTarget); err != nil {
-		return reconcile.Result{}, client.IgnoreNotFound(err)
+	controllerutil.AddFinalizer(sqsTarget, Finalizer)
+	return nil
+}
+
+func (c *Controller) finalize(ctx context.Context, sqsTarget *v1alpha1.SQSTarget) error {
+	if _, err := c.sqsClient.DeleteQueueWithContext(ctx, &sqs.DeleteQueueInput{
+		QueueUrl: lo.ToPtr(sqsTarget.Status.QueueURL),
+	}); err != nil && !strings.Contains(err.Error(), "AWS.SimpleQueueService.NonExistentQueue") {
+		return fmt.Errorf("deleting queue, %w", err)
 	}
-	return reconcile.Result{}, nil
+	if _, err := c.eventBridgeClient.RemoveTargetsWithContext(ctx, &eventbridge.RemoveTargetsInput{
+		EventBusName: aws.String("default"),
+		Rule:         aws.String(sqsTarget.Spec.EventRule),
+		Ids:          aws.StringSlice([]string{string(sqsTarget.UID)}),
+	}); err != nil && !strings.Contains(err.Error(), "ResourceNotFoundException") {
+		return fmt.Errorf("removing event rule targets, %w", err)
+	}
+	controllerutil.RemoveFinalizer(sqsTarget, Finalizer)
+	return nil
 }
 
 func arnFromQueueUrl(queueurl *string) *string {
